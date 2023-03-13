@@ -1,0 +1,44 @@
+﻿@model KafkaStatusViewModel
+
+<h1>Kafka Status</h1>
+
+<h2>Consumer Groups</h2>
+<ul>
+    @foreach (var consumerGroup in Model.ConsumerGroups)
+    {
+        <li>@consumerGroup.GroupId</li>
+    }
+</ul>
+
+<h2>Topics</h2>
+<ul>
+    @foreach (var topic in Model.Topics)
+    {
+        <li>@topic.Topic</li>
+    }
+</ul>
+
+<h2>Messages</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Topic</th>
+            <th>Partition</th>
+            <th>Offset</th>
+            <th>Key</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var message in Model.Messages)
+        {
+            <tr>
+                <td>@message.Topic</td>
+                <td>@message.Partition</td>
+                <td>@message.Offset</td>
+                <td>@message.Key</td>
+                <td>@message.Value</td>
+            </tr>
+        }
+    </tbody>
+</table>
