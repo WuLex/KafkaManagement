@@ -1,15 +1,14 @@
 ﻿using Confluent.Kafka;
-using Confluent.Kafka.DependencyInjection;
-using KafkaMonitor.Models;
+using KafkaMonitor.Services;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
 
 namespace KafkaMonitor.Controllers
 {
     public class KafkaController : Controller
     {
-        private readonly KafkaService _kafkaService;
+        private readonly IKafkaService _kafkaService;
         private readonly IConsumer<string, string> _consumer;
+     
         //private readonly KafkaClient<string, string> _kafkaClient;
 
         //public KafkaController(KafkaClient<string, string> kafkaClient)
@@ -17,7 +16,7 @@ namespace KafkaMonitor.Controllers
         //    _kafkaClient = kafkaClient;
         //}
 
-        public KafkaController(IConsumer<string, string> consumer, KafkaService kafkaService)
+        public KafkaController(IConsumer<string, string> consumer, IKafkaService kafkaService)
         {
             _consumer = consumer;
             _kafkaService = kafkaService;
@@ -81,6 +80,25 @@ namespace KafkaMonitor.Controllers
             return View();
         }
 
+        /// <summary>
+        /// 获取 Kafka 消息队列的状态信息。使用 Confluent.Kafka 库中的 AdminClient 类来获取此信息。
+        /// </summary>
+        /// <returns></returns>
+        public IActionResult Topics()
+        {
+            var config = new AdminClientConfig
+            {
+                BootstrapServers = "localhost:9092"
+            };
+
+            using (var adminClient = new AdminClientBuilder(config).Build())
+            {
+                var topics = adminClient.GetMetadata(TimeSpan.FromSeconds(10)).Topics;
+                //var topics = adminClient.GetMetadata().Topics;
+                return View(topics);
+            }
+        }
+  
         //使用Kafka服务类来接收消息并将它们发送到视图
         public IActionResult ConsumeMessage()
         {
@@ -93,9 +111,7 @@ namespace KafkaMonitor.Controllers
                 // (you can use SignalR or other real-time messaging technologies for this)
             });
 
-           return View(messages);
+            return View(messages);
         }
-
-
     }
 }

@@ -1,8 +1,9 @@
 ﻿using Confluent.Kafka;
+using KafkaMonitor.Services;
 using System;
 using System.Text;
 
-public class KafkaService
+public class KafkaService : IDisposable,IKafkaService
 {
     private readonly string _bootstrapServers;
     private readonly string _groupId;
@@ -16,10 +17,13 @@ public class KafkaService
     private readonly CancellationTokenSource _cancellationTokenSource;
 
 
-
     private readonly IProducer<byte[], byte[]> _producer;
     private readonly IConsumer<byte[], byte[]> _consumer;
     private readonly IConsumer<string, string> _consumerTwo;
+
+    public KafkaService()
+    { 
+    }
 
     public KafkaService(IConfiguration configuration,IProducer<byte[], byte[]> producer, IConsumer<byte[], byte[]> consumer)
     {
@@ -57,8 +61,7 @@ public class KafkaService
         _producer = producer;
         _consumer = consumer;
     }
- 
-
+  
     public string GetKafkaStatus()
     {
         try

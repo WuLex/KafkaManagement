@@ -1,0 +1,111 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Kafka Manager</title>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/layui/2.5.7/css/layui.min.css">
+    <script src="https://cdn.staticfile.org/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/layui/2.5.7/layui.min.js"></script>
+</head>
+<body>
+    <div class="layui-container">
+        <div class="layui-row">
+            <div class="layui-col-md8">
+                <table class="layui-table">
+                    <colgroup>
+                        <col width="15%">
+                        <col width="25%">
+                        <col width="25%">
+                        <col width="35%">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>Topic</th>
+                            <th>Partition</th>
+                            <th>Offset</th>
+                            <th>Message</th>
+                        </tr>
+                    </thead>
+                    <tbody id="messages">
+                    </tbody>
+                </table>
+            </div>
+            <div class="layui-col-md4">
+                <form class="layui-form" lay-filter="messageForm">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">Topic</label>
+                        <div class="layui-input-block">
+                            <input type="text" name="topic" required lay-verify="required" placeholder="Enter topic name" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">Message</label>
+                        <div class="layui-input-block">
+                            <textarea name="message" required lay-verify="required" placeholder="Enter message" autocomplete="off" class="layui-textarea"></textarea>
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <div class="layui-input-block">
+                            <button class="layui-btn" lay-submit lay-filter="sendMessage">Send Message</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+
+        $(document).ready(function () {
+            getMessages();
+        });
+
+        function getMessages() {
+            $.ajax({
+                url: "/kafkamanager/messages",
+                type: "GET",
+                dataType: "json",
+                success: function (data) {
+                    var table = $("#messages");
+                    table.empty();
+                    $.each(data, function (i, item) {
+                        var row = $("<tr>");
+                        row.append($("<td>").text(item.topic));
+                        row.append($("<td>").text(item.partition));
+                        row.append($("<td>").text(item.offset));
+                        row.append($("<td>").text(item.message));
+                        table.append(row);
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.error(xhr.responseText);
+                }
+            });
+            // Refresh messages every 5 seconds
+            setTimeout(getMessages, 5000);
+        }
+        layui.use(['form'], function () {
+            var form = layui.form;
+            form.on('submit(sendMessage)', function (data) {
+                $.ajax({
+                    url: "/kafkamanager/send",
+                    type: "POST",
+                    data: JSON.stringify(data.field),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (response) {
+                        if (response.success) {
+                            layer.msg("Message sent successfully.");
+                        } else {
+                            layer.msg("Failed to send message: " + response.error);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error(xhr.responseText);
+                    }
+                });
+                return false;
+            });
+        });
+    </script>
+</body>
+</html>

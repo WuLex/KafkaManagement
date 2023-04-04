@@ -1,6 +1,13 @@
 using Confluent.Kafka;
 using Confluent.Kafka.DependencyInjection;
- 
+using KafkaMonitor.Services;
+using KafkaMonitor.Utils;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using static Confluent.Kafka.ConfigPropertyNames;
 
 namespace KafkaMonitor
 {
@@ -24,35 +31,81 @@ namespace KafkaMonitor
             //    options.ConsumerConfig.BootstrapServers = _configuration["Kafka:BootstrapServers"];
             //    options.ProducerConfig.BootstrapServers = _configuration["Kafka:BootstrapServers"];
             //});
-            builder.Services.AddKafkaClient(new ProducerConfig
-            {
-                BootstrapServers = "localhost:9092",
-                //EnableIdempotence = true
-            });
 
-            builder.Services.AddKafkaClient(new ConsumerConfig
-            {
-                BootstrapServers = "somewhere.else:9092",
-                //GroupId = "group1"
-            });
-            //--------------------------------------------------------------------------------
-            var producerConfig = new ProducerConfig
-            {
-                BootstrapServers = "localhost:9092",
-                ClientId = "AspNetCoreKafkaMonitoring",
-                MessageTimeoutMs = 5000
-            };
 
-            var consumerConfig = new ConsumerConfig
-            {
-                BootstrapServers = "localhost:9092",
-                GroupId = "AspNetCoreKafkaMonitoring",
-                AutoOffsetReset = AutoOffsetReset.Earliest
-            };
+            #region 2.0.0ע�᷽ʽ
+            //builder.Services.AddKafkaClient(new ProducerConfig
+            //{
+            //    BootstrapServers = "localhost:9092",
+            //    //EnableIdempotence = true
+            //});
 
-           
+            //builder.Services.AddKafkaClient(new ConsumerConfig
+            //{
+            //    BootstrapServers = "somewhere.else:9092",
+            //    //GroupId = "group1"
+            //}); 
             #endregion
-             
+
+            #region MyRegion 
+
+            builder.Services.AddSingleton(new ConsumerConfig
+            {
+                BootstrapServers = _configuration["Kafka:BootstrapServers"],
+                GroupId = _configuration["Kafka:GroupId"],
+                AutoOffsetReset = AutoOffsetReset.Earliest,
+                EnableAutoCommit = false,
+                MaxPollIntervalMs = 300000,
+                MaxPartitionFetchBytes = 1024 * 1024,
+                FetchWaitMaxMs = 5000
+            });
+
+            builder.Services.AddSingleton(new ProducerConfig
+            {
+                BootstrapServers = _configuration["Kafka:BootstrapServers"]
+            });
+
+            builder.Services.AddSingleton(c => new ConsumerBuilder<string, string>(
+                c.GetRequiredService<ConsumerConfig>())
+                .SetValueDeserializer(new StringDeserializer())
+                .Build());
+
+            builder.Services.AddSingleton(c => new ProducerBuilder<string, string>(
+                c.GetRequiredService<ProducerConfig>())
+                .SetValueSerializer(new StringSerializer())
+            .Build());
+
+            //--------------------------------------------------------------------------------
+            builder.Services.AddSingleton<IProducer<Byte[], Byte[]>>(new MoProducer());
+            builder.Services.AddSingleton<IConsumer<Byte[], Byte[]>>(new MoConsumer());
+
+            //builder.Services.AddSingleton<IKafkaService, KafkaService>();
+            //builder.Services.AddScoped<IKafkaService, KafkaService>();
+            builder.Services.AddScoped<IKafkaService>((sp) =>
+            {
+                var producer = sp.GetRequiredService<IProducer<byte[], byte[]>>();
+                var consumer = sp.GetRequiredService<IConsumer<byte[], byte[]>>();
+                return new KafkaService(_configuration, producer, consumer);
+            });
+            #endregion
+            //--------------------------------------------------------------------------------
+            //var producerConfig = new ProducerConfig
+            //{
+            //    BootstrapServers = "localhost:9092",
+            //    ClientId = "AspNetCoreKafkaMonitoring",
+            //    MessageTimeoutMs = 5000
+            //};
+
+            //var consumerConfig = new ConsumerConfig
+            //{
+            //    BootstrapServers = "localhost:9092",
+            //    GroupId = "AspNetCoreKafkaMonitoring",
+            //    AutoOffsetReset = AutoOffsetReset.Earliest
+            //};
+            //--------------------------------------------------------------------------------
+
+            #endregion
+
             // Add services to the container.
             builder.Services.AddControllersWithViews();
 

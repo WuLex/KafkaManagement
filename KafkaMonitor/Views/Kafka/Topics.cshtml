@@ -1,0 +1,10 @@
+﻿@model IEnumerable<string>
+
+<h2>Kafka Topics</h2>
+
+<ul>
+    @foreach (var topic in Model)
+    {
+        <li>@topic</li>
+    }
+</ul>
