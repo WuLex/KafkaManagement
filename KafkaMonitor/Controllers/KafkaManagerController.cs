@@ -1,18 +1,22 @@
 ﻿using Confluent.Kafka;
+using KafkaMonitor.Dtos;
 using KafkaMonitor.Utils;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KafkaMonitor.Controllers
 {
+
     public class KafkaManagerController : Controller
     {
+        private readonly KafkaService _kafkaService;
         private readonly IConfiguration _config;
         private readonly IConsumer<string, string> _consumer;
         private readonly IProducer<string, string> _producer;
 
-        public KafkaManagerController(IConfiguration config, IConsumer<string, string> consumer, IProducer<string, string> producer)
+        public KafkaManagerController(IConfiguration config, KafkaService kafkaService, IConsumer<string, string> consumer, IProducer<string, string> producer)
         {
             _config = config;
+            _kafkaService = kafkaService;
             _consumer = consumer;
             _producer = producer;
         }
@@ -22,7 +26,8 @@ namespace KafkaMonitor.Controllers
             return View();
         }
 
-        [HttpGet("topics")]
+        [Route("KafkaManager/topics")]
+        [HttpGet()]
         public ActionResult<IEnumerable<string>> GetTopics()
         {
             var bootstrapServers = _config.GetValue<string>("Kafka:BootstrapServers");
@@ -31,7 +36,9 @@ namespace KafkaMonitor.Controllers
             return Ok(topics);
         }
 
-        [HttpGet("topics/{topic}/partitions")]
+
+        [Route("KafkaManager/{topic}/partitions")]
+        [HttpGet("KafkaManager/{topic}/partitionsS")]
         public ActionResult<IEnumerable<int>> GetPartitions(string topic)
         {
             var bootstrapServers = _config.GetValue<string>("Kafka:BootstrapServers");
@@ -45,7 +52,8 @@ namespace KafkaMonitor.Controllers
             return Ok(partitions);
         }
 
-        [HttpGet("topics/{topic}/messages")]
+        [Route("KafkaManager/{topic}/messages")]
+        [HttpGet("KafkaManager/{topic}/messages")]
         public ActionResult<IEnumerable<string>> GetMessages(string topic, int partition, long offset, int count)
         {
             var consumerConfig = new ConsumerConfig
@@ -75,7 +83,8 @@ namespace KafkaMonitor.Controllers
             return Ok(messages);
         }
 
-        [HttpPost("topics/{topic}/messages")]
+        [Route("KafkaManager/{topic}/messages")]
+        [HttpPost("KafkaManager/{topic}/messages")]
         public async Task<ActionResult> PostMessage(string topic, [FromBody] string message)
         {
             var producerConfig = new ProducerConfig { BootstrapServers = _config.GetValue<string>("Kafka:BootstrapServers") };
@@ -87,6 +96,52 @@ namespace KafkaMonitor.Controllers
             Console.WriteLine($"Delivered message '{deliveryResult.Value}' to topic {deliveryResult.Topic}, partition {deliveryResult.Partition}, offset {deliveryResult.Offset}");
 
             return Ok();
+        }
+
+        [Route("KafkaManager/messages")]
+        [HttpGet("KafkaManager/messages")]
+        public IActionResult GetMessages()
+        {
+            //var config = new ConsumerConfig
+            //{
+            //    BootstrapServers = _config["Kafka:BootstrapServers"],
+            //    GroupId = _config["Kafka:GroupId"],
+            //    AutoOffsetReset = AutoOffsetReset.Earliest,
+            //    EnableAutoCommit = false
+            //};
+
+            //var consumerBuilder =new ConsumerBuilder<Ignore, string>(config)
+            //    .SetErrorHandler((_, e) => Console.WriteLine($"Error: {e.Reason}"))
+            //    .Build();
+            try
+            {
+                var messages = _kafkaService.GetMessages();
+                return Ok(messages);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [Route("KafkaManager/send")]
+        [HttpPost("KafkaManager/send")]
+        public async Task<IActionResult> SendMessageAsync([FromBody] KafkaMessageDto messageDto)
+        {
+            try
+            {
+                var message = new Message<string, string>
+                {
+                    Key = messageDto.Topic,
+                    Value = messageDto.Message
+                };
+                await _kafkaService.SendMessage(message);
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, error = ex.Message });
+            }
         }
     }
 }

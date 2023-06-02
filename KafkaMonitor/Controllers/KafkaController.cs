@@ -1,4 +1,5 @@
 ﻿using Confluent.Kafka;
+using KafkaMonitor.Dtos;
 using KafkaMonitor.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,7 +7,7 @@ namespace KafkaMonitor.Controllers
 {
     public class KafkaController : Controller
     {
-        private readonly IKafkaService _kafkaService;
+        private readonly KafkaService _kafkaService;
         private readonly IConsumer<string, string> _consumer;
      
         //private readonly KafkaClient<string, string> _kafkaClient;
@@ -16,7 +17,7 @@ namespace KafkaMonitor.Controllers
         //    _kafkaClient = kafkaClient;
         //}
 
-        public KafkaController(IConsumer<string, string> consumer, IKafkaService kafkaService)
+        public KafkaController(IConsumer<string, string> consumer, KafkaService kafkaService)
         {
             _consumer = consumer;
             _kafkaService = kafkaService;
@@ -25,8 +26,6 @@ namespace KafkaMonitor.Controllers
         public IActionResult Index()
         {
             //var messages = _consumer.Consume(10).ToList();
-            var status = _kafkaService.GetKafkaStatus();
-            ViewBag.Status = status;
             return View();
         }
 
@@ -77,7 +76,7 @@ namespace KafkaMonitor.Controllers
         {
             var status = _kafkaService.GetKafkaStatus();
             ViewBag.Status = status;
-            return View();
+            return View(status);
         }
 
         /// <summary>
@@ -112,6 +111,7 @@ namespace KafkaMonitor.Controllers
             });
 
             return View(messages);
-        }
+        } 
+
     }
 }

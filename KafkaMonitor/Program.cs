@@ -1,5 +1,6 @@
 using Confluent.Kafka;
 using Confluent.Kafka.DependencyInjection;
+using KafkaMonitor.Extensions;
 using KafkaMonitor.Services;
 using KafkaMonitor.Utils;
 using Microsoft.AspNetCore.Builder;
@@ -76,17 +77,19 @@ namespace KafkaMonitor
             .Build());
 
             //--------------------------------------------------------------------------------
-            builder.Services.AddSingleton<IProducer<Byte[], Byte[]>>(new MoProducer());
-            builder.Services.AddSingleton<IConsumer<Byte[], Byte[]>>(new MoConsumer());
 
-            //builder.Services.AddSingleton<IKafkaService, KafkaService>();
-            //builder.Services.AddScoped<IKafkaService, KafkaService>();
-            builder.Services.AddScoped<IKafkaService>((sp) =>
-            {
-                var producer = sp.GetRequiredService<IProducer<byte[], byte[]>>();
-                var consumer = sp.GetRequiredService<IConsumer<byte[], byte[]>>();
-                return new KafkaService(_configuration, producer, consumer);
-            });
+            builder.Services.AddKafka(_configuration);
+            //builder.Services.AddSingleton<IProducer<Byte[], Byte[]>>(new MoProducer());
+            //builder.Services.AddSingleton<IConsumer<Byte[], Byte[]>>(new MoConsumer());
+
+            ////builder.Services.AddSingleton<IKafkaService, KafkaService>();
+            ////builder.Services.AddScoped<IKafkaService, KafkaService>();
+            //builder.Services.AddScoped<IKafkaService>((sp) =>
+            //{
+            //    var producer = sp.GetRequiredService<IProducer<byte[], byte[]>>();
+            //    var consumer = sp.GetRequiredService<IConsumer<byte[], byte[]>>();
+            //    return new KafkaService(_configuration, producer, consumer);
+            //});
             #endregion
             //--------------------------------------------------------------------------------
             //var producerConfig = new ProducerConfig
@@ -119,8 +122,6 @@ namespace KafkaMonitor
             // 在需要使用生产者和消费者的类中使用构造函数注入的方式获取实例
             //builder.Services.AddTransient<KafkaService>(sp => new KafkaService(_configuration, producer, consumer));
 
-
-            // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Home/Error");
@@ -131,10 +132,12 @@ namespace KafkaMonitor
 
             app.UseAuthorization();
 
+            //MapControllers 调用 来映射属性路由控制器
+            app.MapControllers();
+            app.MapDefaultControllerRoute();
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
-
             app.Run();
         }
     }
