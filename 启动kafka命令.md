@@ -1,9 +1,6 @@
 ## windows下使用kafka
 ### 启动zookeeper服务
 下载后，打开zookeeper安装目录，进入bin文件夹，双击zkServer.cmd启动zookeeper服务。
-http://localhost:5253/Kafka/Topics
-http://localhost:5253/Kafka/Status
-http://localhost:5253/Kafka/ConsumeMessage
 
 ### 启动Zookeeper
 ```bash
