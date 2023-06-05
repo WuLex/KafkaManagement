@@ -33,20 +33,20 @@
             <div class="layui-col-md4">
                 <form class="layui-form" lay-filter="messageForm">
                     <div class="layui-form-item">
-                        <label class="layui-form-label">Topic</label>
+                        <label class="layui-form-label">Topic:</label>
                         <div class="layui-input-block">
-                            <input type="text" name="topic" required lay-verify="required" placeholder="Enter topic name" autocomplete="off" class="layui-input">
+                            <input type="text" name="topic" required lay-verify="required" placeholder="输入topic名称" autocomplete="off" class="layui-input">
                         </div>
                     </div>
                     <div class="layui-form-item">
-                        <label class="layui-form-label">Message</label>
+                        <label class="layui-form-label">Message:</label>
                         <div class="layui-input-block">
-                            <textarea name="message" required lay-verify="required" placeholder="Enter message" autocomplete="off" class="layui-textarea"></textarea>
+                            <textarea name="message" required lay-verify="required" placeholder="输入message消息" autocomplete="off" class="layui-textarea"></textarea>
                         </div>
                     </div>
                     <div class="layui-form-item">
                         <div class="layui-input-block">
-                            <button class="layui-btn" lay-submit lay-filter="sendMessage">Send Message</button>
+                            <button class="layui-btn" lay-submit lay-filter="sendMessage">发送消息</button>
                         </div>
                     </div>
                 </form>
@@ -67,7 +67,7 @@
                 success: function (data) {
                     var table = $("#messages");
                     table.empty();
-                    $.each(data, function (i, item) {
+                    $.each(data.result, function (i, item) {
                         var row = $("<tr>");
                         row.append($("<td>").text(item.topic));
                         row.append($("<td>").text(item.partition));

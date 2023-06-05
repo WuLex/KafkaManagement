@@ -52,7 +52,7 @@ namespace KafkaMonitor.Controllers
             return Ok(partitions);
         }
 
-        [Route("KafkaManager/{topic}/messages")]
+        //[Route("KafkaManager/{topic}/messages")]
         [HttpGet("KafkaManager/{topic}/messages")]
         public ActionResult<IEnumerable<string>> GetMessages(string topic, int partition, long offset, int count)
         {
@@ -83,7 +83,7 @@ namespace KafkaMonitor.Controllers
             return Ok(messages);
         }
 
-        [Route("KafkaManager/{topic}/messages")]
+        //[Route("KafkaManager/{topic}/messages")]
         [HttpPost("KafkaManager/{topic}/messages")]
         public async Task<ActionResult> PostMessage(string topic, [FromBody] string message)
         {

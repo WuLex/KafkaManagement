@@ -55,7 +55,7 @@ public class KafkaService : IDisposable
         _consumerTwo = new ConsumerBuilder<string, string>(config)
             .SetValueDeserializer(new StringDeserializer())
             .Build();
-        var topics = new List<string> { "my-topic" };
+        var topics = new List<string> { "mytopic" };
         _consumerTwo.Subscribe(topics);
 
 
@@ -115,38 +115,69 @@ public class KafkaService : IDisposable
     }
     public async Task<IEnumerable<dynamic>> GetMessages()
     {
-        var topics = _config.GetSection("Kafka:Topics").Get<List<string>>();
+        var topics = _config.GetSection("Kafka:Consumer:Topics").Get<List<string>>();
 
         var result = new List<dynamic>();
-
         var consumerConfig = new ConsumerConfig
         {
+            //BootstrapServers = _bootstrapServers,
+            //GroupId = "my-group",
+
             BootstrapServers = _bootstrapServers,
-            GroupId = "my-group"
+            GroupId = "csharp-consumer",
+            EnableAutoOffsetStore = false,
+            EnableAutoCommit = true,
+            StatisticsIntervalMs = 5000,
+            SessionTimeoutMs = 6000,
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+            EnablePartitionEof = true,
+            PartitionAssignmentStrategy = PartitionAssignmentStrategy.CooperativeSticky
+
+            ////EnableAutoOffsetStore = false,
+            ////EnableAutoCommit = true,
+            //StatisticsIntervalMs = 5000,
+            //SessionTimeoutMs = 6000,
+            ////AutoOffsetReset = AutoOffsetReset.Earliest,
+            ////EnablePartitionEof = true,
+            ////PartitionAssignmentStrategy = PartitionAssignmentStrategy.CooperativeSticky
         };
+        
 
-        using (var consumer = new ConsumerBuilder<Ignore, string>(consumerConfig).Build())
+        try
         {
-            consumer.Subscribe(topics);
-
-            while (true)
+            using (var consumer = new ConsumerBuilder<Ignore, string>(consumerConfig).Build())
             {
-                var consumeResult = consumer.Consume();
-                if (consumeResult == null)
+                consumer.Subscribe(topics);
+
+                while (true)
                 {
-                    break;
+                    var consumeResult = consumer.Consume();
+                    if (consumeResult == null)
+                    {
+                        continue;
+                    }
+
+                    result.Add(new
+                    {
+                        topic = consumeResult.Topic,
+                        partition = consumeResult.Partition.Value,
+                        offset = consumeResult.Offset.Value,
+                        message = consumeResult.Message?.Value
+                    });
+
+                    if (consumeResult.IsPartitionEOF)
+                    {
+                        return result;
+                    }
                 }
 
-                result.Add(new
-                {
-                    topic = consumeResult.Topic,
-                    partition = consumeResult.Partition.Value,
-                    offset = consumeResult.Offset.Value,
-                    message = consumeResult.Message.Value
-                });
+                consumer.Close();
             }
 
-            consumer.Close();
+        }
+        catch (Exception ex)
+        {
+           Console.WriteLine(ex);
         }
 
         return result;
@@ -204,7 +235,7 @@ public class KafkaService : IDisposable
         try
         {
             var deliveryResult = await _producer.ProduceAsync(topic, new Message<string, string> { Value = message.Value });
-            _logger.LogInformation($"Sent message to topic {deliveryResult.Topic}, partition {deliveryResult.Partition}, offset {deliveryResult.Offset}");
+            //_logger.LogInformation($"Sent message to topic {deliveryResult.Topic}, partition {deliveryResult.Partition}, offset {deliveryResult.Offset}");
             return true;
         }
         catch (ProduceException<string, string> e)

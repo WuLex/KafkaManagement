@@ -127,6 +127,11 @@ namespace KafkaMonitor.Services
             throw new NotImplementedException();
         }
 
+        public TopicPartitionOffset PositionTopicPartitionOffset(TopicPartition partition)
+        {
+            throw new NotImplementedException();
+        }
+
         public WatermarkOffsets QueryWatermarkOffsets(TopicPartition topicPartition, TimeSpan timeout)
         {
             throw new NotImplementedException();
@@ -138,6 +143,11 @@ namespace KafkaMonitor.Services
         }
 
         public void Seek(TopicPartitionOffset tpo)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SetSaslCredentials(string username, string password)
         {
             throw new NotImplementedException();
         }
