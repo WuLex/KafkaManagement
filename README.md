@@ -12,7 +12,7 @@
 
 
 ## 创建Kafka集群,如图
-
+![img](https://raw.githubusercontent.com/WuLex/UsefulPicture/main/kafkaimg/kafkacluster/dockerkafka.png)
 
 ### 创建一个 `docker-compose.yml` 文件
 
